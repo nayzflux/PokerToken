@@ -1,0 +1,12 @@
+{
+  "name": "pockettoken",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:api": "bun --filter @pockettoken/api dev",
+    "dev:web": "bun --filter @pockettoken/web dev",
+    "build": "bun --filter @pockettoken/web build",
+    "test": "bun test",
+    "typecheck": "bun --filter @pockettoken/api typecheck && bun --filter @pockettoken/web typecheck"
+  }
+}

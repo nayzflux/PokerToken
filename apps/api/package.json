@@ -1,0 +1,20 @@
+{
+  "name": "@pockettoken/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pockettoken/shared": "workspace:*",
+    "hono": "^4.9.9",
+    "ioredis": "^5.4.2",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.22",
+    "typescript": "^5.9.2"
+  }
+}
