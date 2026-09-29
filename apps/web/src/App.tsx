@@ -15,11 +15,13 @@ const format = (value: number) => new Intl.NumberFormat("fr-FR").format(value);
 const compact = (value: number) => new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 const roomPath = (code: string) => `/room/${code}`;
 const codeFromPath = () => /^\/room\/([A-Z]{6})$/.exec(window.location.pathname)?.[1] ?? null;
+const apiOrigin = window.__POCKETTOKEN_CONFIG__?.apiUrl || import.meta.env.VITE_API_URL || "http://localhost:3000";
+const apiUrl = (path: string) => new URL(path, apiOrigin).toString();
 
 async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     method,
-    credentials: "same-origin",
+    credentials: "include",
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -241,8 +243,9 @@ function RoomScreen({ code, initial, onExit }: { code: string; initial: RoomResp
     let delay = 1000;
     const connect = () => {
       if (stopped) return;
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      socket = new WebSocket(`${protocol}//${window.location.host}/api/rooms/${code}/ws`);
+      const url = new URL(apiUrl(`/api/rooms/${code}/ws`));
+      url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+      socket = new WebSocket(url);
       socket.onopen = () => { setConnected(true); delay = 1000; void reload(); };
       socket.onmessage = (event) => {
         const message = JSON.parse(event.data) as { type: string; room?: RoomView };

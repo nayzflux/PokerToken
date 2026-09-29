@@ -50,13 +50,14 @@ const tokenHash = (token: string) => createHash("sha256").update(token).digest("
 const newToken = () => randomBytes(32).toString("base64url");
 const newCode = () => Array.from({ length: 6 }, () => String.fromCharCode(65 + randomInt(26))).join("");
 const cookiePath = (code: string) => `/api/rooms/${code}`;
+const cookieSameSite = process.env.COOKIE_SAME_SITE?.toLowerCase() === "none" ? "None" : "Lax";
 
 function issueCookie(c: any, code: string, token: string) {
   setCookie(c, cookieName(code), token, {
     path: cookiePath(code),
     httpOnly: true,
-    sameSite: "Lax",
-    secure: process.env.COOKIE_SECURE === "true",
+    sameSite: cookieSameSite,
+    secure: process.env.COOKIE_SECURE === "true" || cookieSameSite === "None",
   });
 }
 
@@ -93,8 +94,18 @@ async function rateLimit(c: any) {
 
 app.use("/api/*", async (c, next) => {
   const origin = c.req.header("origin");
-  const allowed = process.env.APP_ORIGIN;
-  if (allowed && origin && origin !== allowed) throw new RuleError("Origine non autorisée.", 403);
+  const allowed = process.env.APP_ORIGIN ?? "http://localhost:5173";
+  if (origin && origin !== allowed) throw new RuleError("Origine non autorisée.", 403);
+  if (origin) {
+    c.header("Access-Control-Allow-Origin", allowed);
+    c.header("Access-Control-Allow-Credentials", "true");
+    c.header("Vary", "Origin");
+    if (c.req.method === "OPTIONS") {
+      c.header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+      c.header("Access-Control-Allow-Headers", "Content-Type");
+      return c.body(null, 204);
+    }
+  }
   await next();
 });
 
